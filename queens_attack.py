@@ -44,41 +44,63 @@ def calc_moves(n, obst, cur_pos, m):
             break
     return moves
 
-def obst_for_m(q_pos, m, obst):
+def partition_obst(q_pos, motions, obst):
     q_r = q_pos[0]
     q_c = q_pos[1]
-    m_r = m[0]
-    m_c = m[1]
 
-    if m_r == 0:
-        # this is a straight-line e or w motion
-        # the only obstacles that can apply have the same
-        # row value as the queen
-        return [(o_r, o_c) for (o_r, o_c) in obst if o_r == q_r]
+    obst_by_m = {}
+    for o in obst:
+        o_r = o[0]
+        o_c = o[1]
+        for m in motions:
+            if m not in obst_by_m:
+                obst_by_m[m] = []
+            m_r = m[0]
+            m_c = m[1]
+            if m_r == 0 and m_c == 1:
+                # this is a straight-line e motion
+                # the only obstacles that can apply have the same
+                # row value as the queen and greater column
+                if o_r == q_r and o_c > q_c:
+                    obst_by_m[m].append(o)
+            elif m_r == 0 and m_c == -1:
+                # this is a straight-line w motion
+                # the only obstacles that can apply have the same
+                # row value as the queen and lesser column
+                if o_r == q_r and o_c < q_c:
+                    obst_by_m[m].append(o)
+            elif m_r == 1 and m_c == 0:
+                # this is a straight-line n motion
+                # the only obstacles that can apply have the same
+                # column value as the queen and greater row
+                if o_c == q_c and o_r > q_r:
+                    obst_by_m[m].append(o)
+            elif m_r == -1 and m_c == 0:
+                # this is a straight-line s motion
+                # the only obstacles that can apply have the same
+                # column value as the queen and less row
+                if o_c == q_c and o_r < q_r:
+                    obst_by_m[m].append(o)
+            elif m_r == 1 and m_c == 1:
+                # ne obstacles
+                if o_c > q_c and o_r > q_r:
+                    obst_by_m[m].append(o)
+            elif m_r == 1 and m_c == -1:
+                # nw obstacles
+                if o_c < q_c and o_r > q_r:
+                    obst_by_m[m].append(o)
+            elif m_r == -1 and m_c == 1:
+                # se obstacles
+                if o_c > q_c and o_r < q_r:
+                    obst_by_m[m].append(o)
+            elif m_r == -1 and m_c == -1:
+                # sw obstacles
+                if o_c < q_c and o_r < q_r:
+                    obst_by_m[m].append(o)
+            else:
+                raise RuntimeError('partition_obst unreachable')
 
-    if m_c == 0:
-        # this is a straight-line n or s motion
-        # the only obstacles that can apply have the same
-        # column value as the queen
-        return [(o_r, o_c) for (o_r, o_c) in obst if o_c == q_c]
-
-    if m_r == 1 and m_c == 1:
-        # ne obstacles
-        return [(o_r, o_c) for (o_r, o_c) in obst if o_c >= q_c and o_r >= q_r]
-
-    if m_r == 1 and m_c == -1:
-        # nw obstacles
-        return [(o_r, o_c) for (o_r, o_c) in obst if o_c <= q_c and o_r >= q_r]
-
-    if m_r == -1 and m_c == 1:
-        # se obstacles
-        return [(o_r, o_c) for (o_r, o_c) in obst if o_c >= q_c and o_r <= q_r]
-
-    if m_r == -1 and m_c == -1:
-        # sw obstacles
-        return [(o_r, o_c) for (o_r, o_c) in obst if o_c <= q_c and o_r <= q_r]
-
-    raise RuntimeError('obst_for_m unreachable')
+    return obst_by_m
 
 def queensAttack(n, k, r_q, c_q, obstacles):
     obst = list(map(tuple, obstacles))
@@ -92,10 +114,11 @@ def queensAttack(n, k, r_q, c_q, obstacles):
     se_m = (-1, 1)
     sw_m = (-1, -1)
     motions = [n_m, ne_m, nw_m, s_m, se_m, sw_m, e_m, w_m]
+    obst_by_m = partition_obst(q_pos, motions, obst)
     total_moves = 0
     # print('q_pos: {}'.format(pprint.pformat(q_pos)))
     for m in motions:
-        m_obst = obst_for_m(q_pos, m, obst)
+        m_obst = obst_by_m[m]
         # print('m: {}'.format(pprint.pformat(m)))
         # print('m_obst: {}'.format(pprint.pformat(m_obst)))
         total_moves += calc_moves(n, m_obst, q_pos, m)
