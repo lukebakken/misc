@@ -21,6 +21,35 @@ import sys
 # int c_q: the column number of the queen's position - 1 based
 # int obstacles[k][2]: each element is a list of integers, the row and column of an obstacle
 
+#   |---|---|---|---|---|
+# 5 |   | o | o | o | x |
+#   |---|---|---|---|---|
+# 4 |   | x | Q | o | o |
+#   |---|---|---|---|---|
+# 3 |   | o | o | o |   |
+#   |---|---|---|---|---|
+# 2 | o |   | x |   | o |
+#   |---|---|---|---|---|
+# 1 |   |   |   |   |   |
+#   |---|---|---|---|---|
+#     1   2   3   4   5
+# 
+# q = (4  , 3)
+#      q_r, q_c
+#
+# starting obstacles:
+# n = (6, 3) = (n + 1, q_c)
+# s = (0, 3) = (0, q_c)
+# e = (4, 6) = (q_c, n + 1)
+# w = (4, 0) = (q_c, 0)
+#
+# ne = (6, 5) = (q_r + (floor(n / 2)), q_c + (floor(n / 2)))
+#      then check position to see if it's a "border". If not, move one more
+#      by adding ne_m
+# nw = (7, 0) = (q_r + (floor(n / 2)), q_c - (floor(n / 2)))
+# se = (1, 6) = (q_r - (floor(n / 2)), q_c + (floor(n / 2)))
+# sw = (1, 0) = (q_r - (floor(n / 2)), q_c - (floor(n / 2)))
+
 n_m = (1, 0)
 e_m = (0, 1)
 s_m = (-1, 0)
@@ -31,70 +60,67 @@ se_m = (-1, 1)
 sw_m = (-1, -1)
 motions = [n_m, ne_m, nw_m, s_m, se_m, sw_m, e_m, w_m]
 
+def ensure_border_pos(n, m, pos):
+    pos_r = pos[0]
+    pos_c = pos[1]
+    n_1 = n + 1
+    print('ensure_border_pos: n: {} m: {} pos: {}'.format(n, m, pprint.pformat(pos)))
+    if (pos_r == 0 or pos_r == n_1):
+        return pos
+    elif (pos_c == 0 or pos_c == n_1):
+        return pos
+    else:
+        return [pos_r + m[0], pos_c + m[1]]
+
+def add_starting_obstacles(n, q_pos, obst):
+    q_r = q_pos[0]
+    q_c = q_pos[1]
+    
+    n2 = n // 2
+
+    n_o = [n + 1, q_c]
+    obst.append(n_o)
+
+    s_o = [0, q_c]
+    obst.append(s_o)
+
+    e_o = [q_c, n + 1]
+    obst.append(e_o)
+
+    w_o = [q_c, 0]
+    obst.append(w_o)
+
+    ne_o = [q_r + n2, q_c + n2]
+    obst.append(ensure_border_pos(n, ne_m, ne_o))
+
+    nw_o = [q_r + n2, q_c - n2]
+    obst.append(ensure_border_pos(n, nw_m, nw_o))
+
+    se_o = [q_r - n2, q_c + n2]
+    obst.append(ensure_border_pos(n, se_m, se_o))
+
+    sw_o = [q_r - n2, q_c - n2]
+    obst.append(ensure_border_pos(n, sw_m, sw_o))
+
+    return obst
+
 def is_valid_pos(n, pos):
     r = pos[0]
     c = pos[1]
     return r >= 1 and c >= 1 and r <= n and c <= n
 
-def is_blocked(obst, pos):
-    return pos in obst
-
-def calc_moves(n, obst, cur_pos, m):
-    moves = 0
-    while True:
-        next_pos = (cur_pos[0] + m[0], cur_pos[1] + m[1])
-        if is_valid_pos(n, next_pos):
-            if is_blocked(obst, next_pos):
-                break
-            else:
-                # print('valid  pos: {}'.format(pprint.pformat(next_pos)))
-                moves += 1
-            cur_pos = next_pos
-        else:
-            break
-    return moves
-
-def partition_obst(q_pos, obst):
-    q_r = q_pos[0]
-    q_c = q_pos[1]
-
-    obst_by_m = {}
-    for m in motions:
-        obst_by_m[m] = []
-
-    for o in obst:
-        o_r = o[0]
-        o_c = o[1]
-        if o_r == q_r and o_c > q_c:
-            obst_by_m[e_m].append(o)
-        elif o_r == q_r and o_c < q_c:
-            obst_by_m[w_m].append(o)
-        elif o_c == q_c and o_r > q_r:
-            obst_by_m[n_m].append(o)
-        elif o_c == q_c and o_r < q_r:
-            obst_by_m[s_m].append(o)
-        elif o_c > q_c and o_r > q_r:
-            obst_by_m[ne_m].append(o)
-        elif o_c < q_c and o_r > q_r:
-            obst_by_m[nw_m].append(o)
-        elif o_c > q_c and o_r < q_r:
-            obst_by_m[se_m].append(o)
-        elif o_c < q_c and o_r < q_r:
-            obst_by_m[sw_m].append(o)
-
-    return obst_by_m
-
 def queensAttack(n, k, r_q, c_q, obstacles):
-    obst = list(map(tuple, obstacles))
-    q_pos = (r_q, c_q)
-    obst_by_m = partition_obst(q_pos, obst)
+    q_pos = [r_q, c_q]
+    obst = add_starting_obstacles(n, q_pos, obstacles)
+
     total_moves = 0
-    # print('q_pos: {}'.format(pprint.pformat(q_pos)))
-    for m in motions:
-        m_obst = obst_by_m.get(m, [])
-        # print('m: {}'.format(pprint.pformat(m)))
-        # print('m_obst: {}'.format(pprint.pformat(m_obst)))
-        total_moves += calc_moves(n, m_obst, q_pos, m)
+    print('q_pos: {}'.format(pprint.pformat(q_pos)))
+    print('obst: {}'.format(pprint.pformat(obst)))
+    # for m in motions:
+    #     m_obst = obst_by_m.get(m, [])
+    #     # print('m: {}'.format(pprint.pformat(m)))
+    #     # print('m_obst: {}'.format(pprint.pformat(m_obst)))
+    #     total_moves += calc_moves(n, m_obst, q_pos, m)
     return total_moves
 
 if __name__ == '__main__':
