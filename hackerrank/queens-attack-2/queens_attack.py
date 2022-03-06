@@ -4,7 +4,6 @@ import os
 import pprint
 import sys
 
-#
 # Complete the 'queensAttack' function below.
 #
 # The function is expected to return an INTEGER.
@@ -21,6 +20,20 @@ import sys
 # int c_q: the column number of the queen's position - 1 based
 # int obstacles[k][2]: each element is a list of integers, the row and column of an obstacle
 #
+#   |---|---|---|---|
+# 4 | o | o | o | Q |
+#   |---|---|---|---|
+# 3 |   |   | o | o |
+#   |---|---|---|---|
+# 2 |   | o |   | o |
+#   |---|---|---|---|
+# 1 | o |   |   | o |
+#   |---|---|---|---|
+#     1   2   3   4  
+# 
+# q = (4  , 4)
+#      q_r, q_c
+#
 #   |---|---|---|---|---|
 # 5 |   | o | o | o | x |
 #   |---|---|---|---|---|
@@ -36,75 +49,42 @@ import sys
 # 
 # q = (4  , 3)
 #      q_r, q_c
-#
-# starting obstacles:
-# n = (6, 3) = (n + 1, q_c)
-# s = (0, 3) = (0, q_c)
-# e = (4, 6) = (q_c, n + 1)
-# w = (4, 0) = (q_c, 0)
-#
-# ne = (6, 5) = (q_r + (floor(n / 2)), q_c + (floor(n / 2)))
-#      then check position to see if it's a "border". If not, move one more
-#      by adding ne_m
-# nw = (7, 0) = (q_r + (floor(n / 2)), q_c - (floor(n / 2)))
-# se = (1, 6) = (q_r - (floor(n / 2)), q_c + (floor(n / 2)))
-# sw = (1, 0) = (q_r - (floor(n / 2)), q_c - (floor(n / 2)))
-#
-# calculating q_pos to pos moves
-# 
-# (4, 3) to (1, 6)
-# (abs(1 - 4), abs(6 - 3))
-# (3, 3) 3 // 3 == 1, so on a diagonal
-# 3 - 1 = 2 moves "in between"
-#
-# (4, 3) to (2, 3)
-# (abs(2 - 4), abs(3 - 3))
-# (2, 0) - if r or c is 0, straight dist
-# 2 - 1 = 1 move "in between"
-#
-
-n_m = (1, 0)
-e_m = (0, 1)
-s_m = (-1, 0)
-w_m = (0, -1)
-ne_m = (1, 1)
-nw_m = (1, -1)
-se_m = (-1, 1)
-sw_m = (-1, -1)
-
-cardinals = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw']
 
 def calc_unobstructed(n, c, q_pos):
     q_r = q_pos[0]
     q_c = q_pos[1]
     if c == 'n':
         return n - q_r
-    if c == 'e':
+    elif c == 'e':
         return n - q_c
-    if c == 's':
+    elif c == 's':
         return q_r - 1
-    if c == 'w':
+    elif c == 'w':
         return q_c - 1
-    if c == 'ne':
+    elif c == 'ne':
         dr = n - q_r
         dc = n - q_c
-        v = min(dr, dc) + 1
-        ne_pos = (q_r + v, q_c + v)
-        return calc_pos(q_pos, ne_pos)
-    if c == 'nw':
+        assert dr >= 0
+        assert dc >= 0
+        return min(dr, dc)
+    elif c == 'nw':
         dr = n - q_r
         dc = q_c - 1
-        v = min(dr, dc) + 1
-        nw_pos = (q_r + v, q_c + v)
-        return calc_pos(q_pos, nw_pos)
-    if c == 'se':
-        dr = n - q_r
+        assert dr >= 0
+        assert dc >= 0
+        return min(dr, dc)
+    elif c == 'se':
+        dr = q_r - 1
+        dc = n - q_c
+        assert dr >= 0
+        assert dc >= 0
+        return min(dr, dc)
+    elif c == 'sw':
+        dr = q_r - 1
         dc = q_c - 1
-        v = min(dr, dc) + 1
-        nw_pos = (q_r + v, q_c + v)
-        return calc_pos(q_pos, nw_pos)
-    if c == 'sw':
-        return FOO
+        assert dr >= 0
+        assert dc >= 0
+        return min(dr, dc)
 
 def calc_pos(q_pos, pos):
     q_r = q_pos[0]
@@ -167,60 +147,11 @@ def calc_pos(q_pos, pos):
     else:
         return None
 
-
-# def ensure_border_pos(n, m, pos):
-#     pos_r = pos[0]
-#     pos_c = pos[1]
-#     n_1 = n + 1
-#     if (pos_r == 0 or pos_r == n_1):
-#         return pos
-#     elif (pos_c == 0 or pos_c == n_1):
-#         return pos
-#     else:
-#         return [pos_r + m[0], pos_c + m[1]]
-# 
-# def add_starting_obstacles(n, q_pos, obst):
-#     q_r = q_pos[0]
-#     q_c = q_pos[1]
-#     
-#     n2 = n // 2
-# 
-#     n_o = [n + 1, q_c]
-#     obst.append(n_o)
-# 
-#     s_o = [0, q_c]
-#     obst.append(s_o)
-# 
-#     e_o = [q_r, n + 1]
-#     obst.append(e_o)
-# 
-#     w_o = [q_r, 0]
-#     obst.append(w_o)
-# 
-#     ne_o = [q_r + n2, q_c + n2]
-#     obst.append(ensure_border_pos(n, ne_m, ne_o))
-# 
-#     nw_o = [q_r + n2, q_c - n2]
-#     obst.append(ensure_border_pos(n, nw_m, nw_o))
-# 
-#     se_o = [q_r - n2, q_c + n2]
-#     obst.append(ensure_border_pos(n, se_m, se_o))
-# 
-#     sw_o = [q_r - n2, q_c - n2]
-#     obst.append(ensure_border_pos(n, sw_m, sw_o))
-# 
-#     return obst
-
 def queensAttack(n, k, r_q, c_q, obstacles):
     q_pos = [r_q, c_q]
-    # obst = add_starting_obstacles(n, q_pos, obstacles)
-
-    total_moves = 0
-    print('q_pos: {}'.format(pprint.pformat(q_pos)))
-    print('obstacles: {}'.format(pprint.pformat(obstacles)))
 
     obst_by_cardinal = {}
-    for c in cardinals:
+    for c in ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw']:
         obst_by_cardinal[c] = None
 
     for o in obstacles:
@@ -237,11 +168,10 @@ def queensAttack(n, k, r_q, c_q, obstacles):
             if dist < curr_dist:
                 obst_by_cardinal[c] = (o, dist)
 
-    print('obst_by_cardinal: {}'.format(pprint.pformat(obst_by_cardinal)))
-
+    total_moves = 0
     for (c, v) in obst_by_cardinal.items():
         if v is None:
-            total_items += calc_unobstructed(n, c, q_pos)
+            total_moves += calc_unobstructed(n, c, q_pos)
         else:
             total_moves += v[1]
 
