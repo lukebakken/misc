@@ -27,11 +27,12 @@ run() ->
     true = erlang:port_command(P, Cmd ++ "\n"),
     sh_receive(MonRef, P, Cmd),
 
-    % ExitCmd = "exit 0",
-    % true = erlang:port_command(P, ExitCmd ++ "\n"),
+    ExitCmd = "exit 0",
+    true = erlang:port_command(P, ExitCmd ++ "\n"),
+    % sh_receive(MonRef, P, ExitCmd),
 
     true = erlang:demonitor(MonRef, [flush]),
-    RV = erlang:port_close(P),
+    RV = catch erlang:port_close(P),
     io:format("port_close RV: ~p~n", [RV]).
 
 
