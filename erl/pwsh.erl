@@ -35,7 +35,10 @@ run() ->
     RV = catch erlang:port_close(P),
     io:format("port_close RV: ~p~n", [RV]).
 
-
+% Data: "721756360704"
+% Data0: "PS C:\\WINDOWS> (Get-PSDrive -Name C).Free"
+% found cmd in output: "(Get-PSDrive -Name C).Free"
+% Data: "721756217344"
 sh_receive(MonRef, Port, Cmd) ->
     FoundCmd =  receive
                     {'DOWN', MonRef, port, Port, Info0} ->
