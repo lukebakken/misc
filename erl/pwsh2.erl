@@ -6,7 +6,7 @@ run() ->
     SystemRootDir = os:getenv("SystemRoot", "/"), 
     Pwsh = os:find_executable("pwsh.exe"), 
     
-    Cmd = "Get-Process -Id " ++ os:getpid() ++ " | Select-Object -ExpandProperty HandleCount; Write-Host DONE",
+    Cmd = "Get-Process -Id " ++ os:getpid() ++ " | Select-Object -ExpandProperty HandleCount",
     A1 = ["-NoLogo",
           "-NonInteractive",
           "-NoProfile",
@@ -15,14 +15,8 @@ run() ->
           "-Command", Cmd],
     
     % Note: 'hide' must be used or this will not work!
-    A0 = [binary,
-          stderr_to_stdout,
-          in,
-          hide,
-          {cd, SystemRootDir},
-          {line, 512},
-          {arg0, Pwsh},
-          {args, A1}],
+    A0 = [binary, exit_status, stderr_to_stdout, in, hide,
+          {cd, SystemRootDir}, {line, 512}, {arg0, Pwsh}, {args, A1}],
 
     Port = erlang:open_port({spawn_executable, Pwsh}, A0),
     MonRef = erlang:monitor(port, Port),
@@ -37,10 +31,14 @@ run() ->
 
 pwsh_receive(Port, MonRef, Data0) ->
     receive
-        {Port, {data, {eol, <<"DONE">>}}} ->
+        {Port, {exit_status, 0}} ->
             catch erlang:port_close(Port),
             flush_until_down(Port, MonRef),
             {ok, Data0};
+        {Port, {exit_status, Status}} ->
+            catch erlang:port_close(Port),
+            flush_until_down(Port, MonRef),
+            {error, {exit_status, Status}};
         {Port, {data, {eol, Data1}}} ->
             pwsh_receive(Port, MonRef, Data1);
         {'DOWN', MonRef, _, _, _} ->
