@@ -4,7 +4,7 @@
 
 run() ->
     SystemRootDir = os:getenv("SystemRoot", "/"), 
-    Pwsh = os:find_executable("powershell.exe"), 
+    Pwsh = os:find_executable("pwsh.exe"), 
     
     A1 = ["-NonInteractive", "-NoProfile", "-NoLogo", "-InputFormat", "Text", "-WindowStyle", "Hidden"],
     
