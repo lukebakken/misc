@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 # set -o xtrace
-# set -o errexit
-# set -o nounset
-# set -o pipefail
+set -o errexit
+set -o nounset
+set -o pipefail
 
 while IFS=$'\t' read -r name password
 do
