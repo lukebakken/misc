@@ -22,16 +22,34 @@ async Task<TcpClient> Connect(TimeSpan timeout, CancellationToken cancellationTo
     {
         if (opex.CancellationToken == timeoutTokenSource.Token)
         {
-            Console.Error.WriteLine("[ERROR] timeout connecting to ep: {0}, ex: {1}", ep, opex);
+            Console.Error.WriteLine("[ERROR] 0 timeout connecting to ep: {0}, ex: {1}", ep, opex);
+        }
+        else if (opex.CancellationToken == cancellationToken)
+        {
+            Console.Error.WriteLine("[ERROR] 1 operation canceled connecting to ep: {0}, ex: {1}, inner: {2}",
+                ep, opex, opex.InnerException);
+        }
+        else if (opex.CancellationToken == lts.Token)
+        {
+            if (timeoutTokenSource.Token.IsCancellationRequested)
+            {
+                Console.Error.WriteLine("[ERROR] 2.0 timeout connecting to ep: {0}, ex: {1}", ep, opex);
+            }
+            else if (cancellationToken.IsCancellationRequested)
+            {
+                Console.Error.WriteLine("[ERROR] 2.1 operation canceled connecting to ep: {0}, ex: {1}, inner: {2}",
+                    ep, opex, opex.InnerException);
+            }
         }
         else
         {
-            Console.Error.WriteLine("[ERROR] operation canceled connecting to ep: {0}, ex: {1}", ep, opex);
+            Console.Error.WriteLine("[ERROR] 3 operation canceled connecting to ep: {0}, ex: {1}, inner: {2}",
+                ep, opex, opex.InnerException);
         }
     }
     catch (Exception ex)
     {
-        Console.Error.WriteLine("[ERROR] exception connecting to ep: {0}, ex: {1}", ep, ex);
+        Console.Error.WriteLine("[ERROR] exception connecting to ep: {0}, ex: {1}, inner: {2}", ep, ex, ex.InnerException);
     }
 
     return client;
@@ -88,13 +106,13 @@ async Task Get(TcpClient client, TimeSpan timeout, CancellationToken cancellatio
     }
     catch (Exception ex)
     {
-        Console.Error.WriteLine("[ERROR] exception writing/reading, ex: {0}", ex);
+        Console.Error.WriteLine("[ERROR] exception writing/reading, ex: {0}, inner: {1}", ex, ex.InnerException);
     }
 }
 
 // var timeout = TimeSpan.FromMilliseconds(250);
 var timeout = TimeSpan.FromSeconds(1);
 using var cts = new CancellationTokenSource();
-cts.CancelAfter(750);
+cts.CancelAfter(1500);
 TcpClient client = await Connect(timeout, cts.Token);
 await Get(client, timeout, cts.Token);
