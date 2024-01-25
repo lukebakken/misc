@@ -50,19 +50,21 @@ finally
 
 class WorkerWithTimer : IDisposable
 {
-    private readonly CancellationTokenSource internalTokenSource = new();
+    // private readonly CancellationTokenSource internalTokenSource = new();
+    private readonly CancellationTokenSource internalTokenSource;
     private readonly CancellationToken externalToken;
     private readonly CancellationToken internalToken;
-    private readonly Timer timer;
+    // private readonly Timer timer;
 
     public WorkerWithTimer(CancellationToken externalToken)
     {
+        this.internalTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         this.internalToken = internalTokenSource.Token;
         this.externalToken = externalToken;
 
         // A toy cancellation trigger that times out after 3 seconds
         // if the user does not press 'c'.
-        this.timer = new Timer(new TimerCallback(CancelAfterTimeout), null, 3000, 3000);
+        // this.timer = new Timer(new TimerCallback(CancelAfterTimeout), null, 3000, 3000);
     }
 
     //<snippet7>
@@ -98,7 +100,7 @@ class WorkerWithTimer : IDisposable
 
                 // We need to dispose the timer if cancellation
                 // was requested by the external token.
-                timer.Dispose();
+                // timer.Dispose();
 
                 // Throw the exception.
                 token.ThrowIfCancellationRequested();
@@ -110,16 +112,18 @@ class WorkerWithTimer : IDisposable
         }
     }
 
+    /*
     public void CancelAfterTimeout(object? state)
     {
         Console.WriteLine("\r\nTimer fired.");
         internalTokenSource.Cancel();
         timer.Dispose();
     }
+    */
 
     public void Dispose()
     {
         internalTokenSource.Dispose();
-        timer.Dispose();
+        // timer.Dispose();
     }
 }
