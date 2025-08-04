@@ -14,14 +14,14 @@ func main() {
 	startTime := time.Now()
 	connections := make([]*amqp.Conn, 0, 3501)
 
-	for i := 0; i < 3500; i++ {
+	for i := 0; i < 10000; i++ {
 		if i%1000 == 0 {
 			log.Printf("Opened %d connections", i)
 		}
 
 		conn, err := amqp.Dial(
 			context.TODO(),
-			"amqp://TODO",
+			"amqp://ec2-18-234-175-136.compute-1.amazonaws.com",
 			&amqp.ConnOptions{SASLType: amqp.SASLTypeAnonymous()},
 		)
 		if err != nil {
@@ -43,7 +43,7 @@ func main() {
 
 	log.Println("All connections opened. Waiting for up to 60 minutes. Press Ctrl+C to exit early.")
 	elapsed := time.Since(startTime)
-	log.Printf("Finished creating 3500 connections in %s", elapsed)
+	log.Printf("Finished creating %d connections in %s", len(connections), elapsed)
 
 	// Handle interrupt signal
 	sig := make(chan os.Signal, 1)
